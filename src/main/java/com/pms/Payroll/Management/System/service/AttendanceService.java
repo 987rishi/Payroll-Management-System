@@ -6,10 +6,13 @@ import com.pms.Payroll.Management.System.helpers.Utility;
 import com.pms.Payroll.Management.System.mappers.AttendanceMapper;
 import com.pms.Payroll.Management.System.models.Attendance;
 import com.pms.Payroll.Management.System.models.AttendanceRecord;
+import com.pms.Payroll.Management.System.models.Employee;
 import com.pms.Payroll.Management.System.repo.AttendanceRecordRepo;
 import com.pms.Payroll.Management.System.repo.AttendanceRepo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -30,6 +33,11 @@ public class AttendanceService {
   private AttendanceRepo attendanceRepo;
   @Autowired
   private AttendanceMapper attendanceMapper;
+  @Autowired
+  private EmployeeService employeeService;
+
+  private static final Logger logger =
+          LoggerFactory.getLogger(AttendanceService.class);
 
   @Transactional
   public ResponseEntity<?> mark(@Valid AttendanceRecordDTO attendanceRecord) {
@@ -40,11 +48,25 @@ public class AttendanceService {
     else
       dateOfRecord = attendanceRecord.getDateOfRecord();
 
+    Employee employee =
+            employeeService.getEmployeeByEmail(attendanceRecord.getEmpEmail());
 
-    Attendance attendance = Utility.findOrThrow("ATTENDANCE",
-            attendanceRepo,attendanceRecord.getAttendance());
+//    Attendance attendance = Utility.findOrThrow("ATTENDANCE",
+//            attendanceRepo,attendanceRecord.getAttendance());
+    Month month = dateOfRecord.getMonth();
+    Attendance attendance =
+            attendanceRepo.findByEmpIdAndMonth(employee.getEmployeeId(),
+                    month.getValue());
+    if (attendance == null ) {
+      attendance = new Attendance();
+      attendance.setEmployee(employee);
+      attendance.setMonth(LocalDate.now().getMonth());
+    }
+//    && dateOfRecord.getDayOfMonth() == 1
 
     AttendanceRecord newRecord = new AttendanceRecord();
+    logger.info("ATTENDANCE ={}",attendance);
+//    logger.info("ATTENDANCE.month.value={}",attendance.getMonth().);
 
     newRecord.setAttendance(attendance);
     newRecord.setDateOfRecord(dateOfRecord);
@@ -97,16 +119,27 @@ public class AttendanceService {
     return  new ResponseEntity<>(attendanceDtos ,HttpStatus.OK);
   }
 
-  public ResponseEntity<?> getAttendanceByEmployeeId(Long employeeId) {
+  public ResponseEntity<?> getAttendanceByEmployeeEmail(String employeeEmail) {
 
-    AttendanceDto attendanceDto =
-            attendanceMapper.toDto(attendanceRepo
-                    .findByEmployeeId(employeeId)
-                    .orElseThrow(() ->
-                            new NoSuchElementException("ATTENDANCE DOES NOT " +
-                                    "EXIST CORRESPONDING TO EMPLOYEE ID :" + employeeId))
-            );
+    Employee employee = employeeService.getEmployeeByEmail(employeeEmail);
 
-    return new ResponseEntity<>(attendanceDto, HttpStatus.OK);
+    List<AttendanceDto> attendanceDtos =
+            attendanceRepo
+                    .findAllByEmployeeId(employee.getEmployeeId())
+                    .stream()
+                    .map(attendanceMapper::toDto)
+                    .collect(Collectors.toList());
+
+
+    return new ResponseEntity<>(attendanceDtos, HttpStatus.OK);
+  }
+
+  public ResponseEntity<?> getAllAttendanceRecordsById(Long attId) {
+    List<AttendanceRecord> attendanceRecords =
+            attendanceRecordRepo
+                    .findAllByAttendanceId(attId);
+    return new ResponseEntity<>(attendanceRecords, HttpStatus.OK);
+
+
   }
 }

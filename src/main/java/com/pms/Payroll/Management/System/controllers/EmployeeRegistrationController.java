@@ -27,4 +27,11 @@ public class EmployeeRegistrationController {
   public ResponseEntity<?> getEmployeeByEmployeeId(@PathVariable Long employeeId) {
     return employeeService.getEmployeeById(employeeId);
   }
+  @GetMapping("employees/dept/emp/{empEmail}")
+  public ResponseEntity<?> getAllEmployeesBelongingToDeptOfEmpEmail(@PathVariable String empEmail) {
+    return employeeService.getAllEmployeesInDeptByEmpEmail(empEmail);
+  }
+
+
+
 }

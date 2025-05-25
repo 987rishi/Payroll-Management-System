@@ -5,11 +5,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 
+import java.time.Month;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface AttendanceRepo extends JpaRepository<Attendance,Long> {
 
   @NativeQuery("select * from attendance where employee_id=:employeeId")
-  Optional<Attendance> findByEmployeeId(Long employeeId);
+  List<Attendance> findAllByEmployeeId(Long employeeId);
+
+  @NativeQuery("select * from attendance where employee_id=:employeeId and " +
+          "month=:month ")
+  Attendance findByEmpIdAndMonth(Long employeeId, Integer month);
 }

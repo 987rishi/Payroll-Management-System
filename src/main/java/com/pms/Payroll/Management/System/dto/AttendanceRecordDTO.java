@@ -28,5 +28,5 @@ public class AttendanceRecordDTO {
     private String remarks;
 
     @NotNull
-    private Long attendance;
+    private String empEmail;
 }

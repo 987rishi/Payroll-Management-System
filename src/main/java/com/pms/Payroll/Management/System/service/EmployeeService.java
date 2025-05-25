@@ -4,6 +4,7 @@ import com.pms.Payroll.Management.System.dto.EmployeeRegister;
 import com.pms.Payroll.Management.System.models.*;
 import com.pms.Payroll.Management.System.repo.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 
@@ -120,5 +122,20 @@ public class EmployeeService {
                                 "CORRESPONDING TO ID:" + employeeId)),
                 HttpStatus.OK
         );
+    }
+    public Employee getEmployeeByEmail(@Email String email) {
+        return employeeRepo
+                .findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("EMPLOYEE DOES " +
+                        "NOT EXIST CORRESPONDING TO EMAIL:" + email));
+    }
+
+    public ResponseEntity<?> getAllEmployeesInDeptByEmpEmail(String empEmail) {
+        Employee employee = getEmployeeByEmail(empEmail);
+
+        List<Employee> employeeList =
+                employeeRepo.findAllByDeptAndRole(employee.getDepartment().getDeptId());
+
+        return new ResponseEntity<>(employeeList, HttpStatus.OK);
     }
 }

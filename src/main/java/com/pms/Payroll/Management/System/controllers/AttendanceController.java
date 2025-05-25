@@ -36,9 +36,14 @@ public class AttendanceController {
     return attendanceService.getAllAttendances();
   }
 
-  @GetMapping("attendances/emp/{employeeId}")
-  public ResponseEntity<?> getAttendanceByEmployeeId(@PathVariable Long employeeId) {
-    return attendanceService.getAttendanceByEmployeeId(employeeId);
+  @GetMapping("attendances/emp/{employeeEmail}")
+  public ResponseEntity<?> getAttendanceByEmployeeEmail(@PathVariable String employeeEmail) {
+    return attendanceService.getAttendanceByEmployeeEmail(employeeEmail);
+  }
+
+  @GetMapping("attendance-records/{attId}")
+  public ResponseEntity<?> getAllAttendanceRecordsByAttendanceId(@PathVariable Long attId) {
+    return attendanceService.getAllAttendanceRecordsById(attId);
   }
 
 

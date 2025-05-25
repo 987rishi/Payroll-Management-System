@@ -1,5 +1,6 @@
 package com.pms.Payroll.Management.System.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -39,6 +40,7 @@ public class PayrollRecord {
 
     @ManyToOne
     @JoinColumn(name = "employee_id",nullable = false)
+    @JsonIgnore
     private Employee employee;
 
 }

@@ -3,6 +3,7 @@ package com.pms.Payroll.Management.System.controllers;
 import com.pms.Payroll.Management.System.dto.PayrollDto;
 import com.pms.Payroll.Management.System.service.PayrollService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,4 +42,22 @@ public class PayrollController {
     return payrollService.markPaid(payrollId);
 
   }
+
+  @GetMapping("payrolls/emp-email/{empEmail}")
+  public ResponseEntity<?> getPayrollRecordsByEmail(@PathVariable @Email String empEmail) {
+    return payrollService.getPayrollsByEmpEmail(empEmail);
+  }
+
+  @GetMapping("payrolls/details/{payrollId}")
+  public ResponseEntity<?> getPayrollStructureByPayrollId(@PathVariable Long payrollId) {
+    return payrollService.getPayrollDetailsById(payrollId);
+  }
+
+
+  @GetMapping("payrolls/emp-email/dept/{empEmail}")
+  public ResponseEntity<?> getAllEmployeePayrollsOfDeptByEmpEmail(@PathVariable String empEmail) {
+    return payrollService.getAllEmployeePayrollsOfDeptByEmpEmail(empEmail);
+
+  }
+
 }

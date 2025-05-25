@@ -1,9 +1,13 @@
 package com.pms.Payroll.Management.System.service;
 
+import com.pms.Payroll.Management.System.dto.GeneratePayslipsDto;
+import com.pms.Payroll.Management.System.dto.PayrollDetailViewDto;
 import com.pms.Payroll.Management.System.dto.PayrollDto;
+import com.pms.Payroll.Management.System.dto.ViewPayrollPageDto;
 import com.pms.Payroll.Management.System.models.*;
 import com.pms.Payroll.Management.System.repo.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +38,14 @@ public class PayrollService {
 
   @Autowired
   private DeductionRepo deductionRepo;
+
+  @Autowired
+  private AttendanceRepo attendanceRepo;
+
+  @Autowired
+  private EmployeeService employeeService;
+
+
 
   private Logger logger = LoggerFactory.getLogger(PayrollService.class);
 
@@ -169,5 +180,71 @@ public class PayrollService {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public ResponseEntity<?> getPayrollsByEmpEmail(@Email String empEmail) {
+
+    List<PayrollRecord> empPayrolls =
+            payrollRecordRepo.findAllByEmpEmail(empEmail);
+
+    return new ResponseEntity<>(empPayrolls, HttpStatus.OK);
+  }
+
+  public ResponseEntity<?> getPayrollDetailsById(Long payrollId) {
+    PayrollRecord payrollRecord = payrollRecordRepo
+            .findById(payrollId)
+            .orElseThrow(() -> new NoSuchElementException(
+                    "PAYROLL RECORD DOES NOT EXIST CORRESPONDING TO ID:" + payrollId)
+            );
+
+    PayrollDetailViewDto payrollView = new PayrollDetailViewDto();
+
+    payrollView.setPayrollId(payrollRecord.getPayrollId());
+    payrollView.setBaseSalary(payrollRecord.getBaseSalary());
+    payrollView.setNetSalary(payrollRecord.getNetSalary());
+    payrollView.setMonth(payrollRecord.getMonth());
+    payrollView.setSalaryPaid(payrollRecord.isSalaryPaid());
+    payrollView.setPayDateEnd(payrollRecord.getPayDateEnd());
+    payrollView.setPayDateStart(payrollRecord.getPayDateStart());
+
+    Allowances allowances = allowancesRepo
+            .findByPayrollRecord(payrollRecord.getPayrollId())
+            .orElseThrow(() -> new NoSuchElementException(
+                    "NO ALLOWANCES CORRESPONDING TO PAYROLL ID:" + payrollId
+            ));
+    Deduction deduction = deductionRepo
+            .findByPayrollRecord(payrollRecord.getPayrollId())
+            .orElseThrow(() -> new NoSuchElementException(
+                    "NO DEDUCTIONS CORRESPONDING TO PAYROLL ID:" + payrollId
+            ));
+
+    payrollView.setAllowances(allowances.getAllowanceType());
+    payrollView.setDeductions(deduction.getDeductionType());
+
+    return new ResponseEntity<>(payrollView, HttpStatus.OK);
+
+
+  }
+
+  //
+//  { empId: 'EMP001', empName: 'Alice Smith', dept: 'HR', attendancePercent: 95, currentPaySalary: 6000, payPeriod: '2024-07', conduct: 'Good', remarks: '', salaryPaid: false },
+//  { empId: 'EMP002', empName: 'Bob Johnson', dept: 'HR', attendancePercent: 98, currentPaySalary: 6200, payPeriod: '2024-07', conduct: 'Excellent', remarks: 'Top performer', salaryPaid: true },
+//          ];
+
+  public ResponseEntity<?> getAllEmployeePayrollsOfDeptByEmpEmail(String empEmail) {
+    Employee employee = employeeService.getEmployeeByEmail(empEmail);
+
+    List<GeneratePayslipsDto> generatePayslipDtos;
+    if (Objects.equals(employee.getRole().getRoleName(), "FINANCE_MANAGER")) {
+      generatePayslipDtos = payrollRecordRepo.findAllGeneratePayslipsForFM(employee.getRole().getRank());
+      logger.info("ALO");
+    }
+    else {
+      generatePayslipDtos =
+              payrollRecordRepo.findAllGeneratePayslipsView(employee.getDepartment().getDeptId(), employee.getRole().getRank());
+    }
+
+
+    return new ResponseEntity<>(generatePayslipDtos, HttpStatus.OK);
   }
 }

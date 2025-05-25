@@ -6,13 +6,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.Month;
+
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+//@IdClass(CompositeKeyAttendance.class)
 public class Attendance {
 
     @Id
@@ -46,6 +49,7 @@ public class Attendance {
     private Integer daysWithEarlyExit = 0;
 
     @Column(name = "conduct")
+    @Enumerated(EnumType.STRING)
     private Conduct conduct;
 
     @Column(name = "remarks")
